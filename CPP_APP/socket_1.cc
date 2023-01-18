@@ -11,9 +11,7 @@ using namespace std;
 
 int main () {
 	int opt = 1, setopt, bindresult, listening, new_socket;
-	struct sockaddr_in saddress, cliaddress;
-	socklen_t clilen = sizeof(cliaddress);
-	char hello[] = "Hello World";
+	struct sockaddr_in saddress;
 	int socket_fh = socket(AF_INET, SOCK_STREAM, 0);
 	if (socket_fh < 0) {
 		perror("socket failed");
@@ -39,8 +37,11 @@ int main () {
 		exit(EXIT_FAILURE);
 	}
 	while(true) {
+		struct sockaddr_in cliaddress;
+		socklen_t clilen = sizeof(cliaddress);
+		memset(&cliaddress, '\0', sizeof(struct sockaddr_in));
 		new_socket = accept(socket_fh, (struct sockaddr*)&cliaddress, &clilen);
-		if (new_socket > 0) {
+		if (new_socket >= 0) {
 			char reply[] = "HTTP/1.1 200 OK\r\n"
 			"Content-Type: text/html\r\n"
 			"Content-Length: 20\r\n"
@@ -52,7 +53,8 @@ int main () {
 			send(new_socket, reply, strlen(reply), 0);
 			close(new_socket);
 		} else {
-			shutdown(socket_fh, SHUT_RDWR);	
+			close(socket_fh);
+			break;	
 		}
 	}
 	return 0;
